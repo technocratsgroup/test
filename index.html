@@ -1001,7 +1001,7 @@
         class CombinedPortal {
             constructor() {
                 // Use your render server URL here
-                this.serverUrl = 'https://your-server-name.onrender.com';
+                this.serverUrl = 'https://server-xq4t.onrender.com';
                 this.isAuthenticated = false;
                 this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
                 this.sessionTimer = null;
@@ -1212,12 +1212,6 @@
                 }
             }
 
-            fallbackPasswordValidation(password) {
-                // Temporary fallback - replace with server validation
-                const validPasswords = ['strangerbot05', 'admin123', 'portal2025'];
-                return validPasswords.includes(password);
-            }
-
             saveAuthState() {
                 const authState = {
                     authenticated: true,
@@ -1300,10 +1294,6 @@
                     return data.valid === true;
                 } catch (error) {
                     console.error('Developer validation error:', error);
-                    
-                    // Fallback to hardcoded validation if server is unreachable
-                    console.warn('Using fallback developer validation');
-                    return username === 'rehaan05' && password === 'sonimess1400';
                 }
             }
 
@@ -1333,9 +1323,8 @@
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            action: 'updatePortalPassword',
-                            currentDeveloperPassword: 'sonimess1400', // In real app, get this from form
-                            newPortalPassword: newPassword
+                              currentDeveloperPassword: currentDevPassword, // User enters this
+                              newPortalPassword: newPassword
                         })
                     });
 
