@@ -781,7 +781,7 @@
                     <span style="background: rgba(255, 255, 255, 0.95); padding: 0 20px; color: #6c757d; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; font-weight: 500;">or</span>
                 </div>
 
-                <button id="developerLoginBtn" class="developer-btn" onclick="window.CombinedPortal && window.CombinedPortal.showDeveloperLogin()">
+                <button type="button" id="developerLoginBtn" class="developer-btn">
                     <i class="fas fa-code"></i>
                     Developer Login
                 </button>
@@ -849,7 +849,7 @@
                     </div>
                 </div>
 
-                <div style="margin-bottom: 40px;">
+                 <div style="margin-bottom: 40px;">
                     <h3 style="font-size: 1.5em; color: #333; margin-bottom: 30px; display: flex; align-items: center; gap: 10px;"><i class="fas fa-wrench" style="color: #667eea;"></i> Password Management</h3>
                     
                     <div style="background: linear-gradient(135deg, #f8f9ff, #ffffff); border: 2px solid #e0e6ed; border-radius: 15px; padding: 30px; margin-bottom: 20px;">
@@ -886,7 +886,7 @@
                         <i class="fas fa-external-link-alt"></i>
                         Access Portal
                     </button>
-                    <button id="devLogoutBtn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 18px 35px; border-radius: 15px; font-size: 16px; font-weight: 600; cursor: cursor; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                    <button id="devLogoutBtn" style="background: linear-gradient(135deg, #6c757d 0%, #495057 100%); color: white; border: none; padding: 18px 35px; border-radius: 15px; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 10px;">
                         <i class="fas fa-sign-out-alt"></i>
                         Logout
                     </button>
@@ -1003,6 +1003,7 @@
                 // Use your render server URL here
                 this.serverUrl = 'https://server-xq4t.onrender.com';
                 this.isAuthenticated = false;
+                this.isDeveloperAuthenticated = false;
                 this.sessionTimeout = 30 * 60 * 1000; // 30 minutes
                 this.sessionTimer = null;
                 
@@ -1038,12 +1039,6 @@
                 this.accessPortalBtn = document.getElementById('accessPortalBtn');
                 this.devLogoutBtn = document.getElementById('devLogoutBtn');
                 
-                // Debug: Check if developer button exists
-                console.log('Developer login button found:', this.developerLoginBtn ? 'Yes' : 'No');
-                if (this.developerLoginBtn) {
-                    console.log('Button element:', this.developerLoginBtn);
-                }
-                
                 // Password change form
                 this.changePortalPasswordForm = document.getElementById('changePortalPasswordForm');
                 this.toggleNewPortalPassword = document.getElementById('toggleNewPortalPassword');
@@ -1072,9 +1067,66 @@
                     this.handleAuthentication();
                 });
 
+                // Developer login button event
+                if (this.developerLoginBtn) {
+                    this.developerLoginBtn.addEventListener('click', () => {
+                        console.log('Developer login button clicked');
+                        this.showDeveloperLogin();
+                    });
+                }
+
+                // Developer form submit
+                if (this.developerLoginForm) {
+                    this.developerLoginForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleDeveloperLogin();
+                    });
+                }
+
+                // Back to main button
+                if (this.backToMainBtn) {
+                    this.backToMainBtn.addEventListener('click', () => {
+                        this.showMainCard();
+                    });
+                }
+
+                // Developer dashboard buttons
+                if (this.accessPortalBtn) {
+                    this.accessPortalBtn.addEventListener('click', () => {
+                        this.accessPortalAsDeveloper();
+                    });
+                }
+
+                if (this.devLogoutBtn) {
+                    this.devLogoutBtn.addEventListener('click', () => {
+                        this.handleDeveloperLogout();
+                    });
+                }
+
+                // Password change form
+                if (this.changePortalPasswordForm) {
+                    this.changePortalPasswordForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        this.handleChangePortalPassword();
+                    });
+                }
+
+                // Password visibility toggles
                 this.togglePortalPassword.addEventListener('click', () => {
                     this.togglePasswordVisibility(this.portalPasswordInput, this.togglePortalPassword);
                 });
+
+                if (this.toggleDeveloperPassword) {
+                    this.toggleDeveloperPassword.addEventListener('click', () => {
+                        this.togglePasswordVisibility(this.developerPasswordInput, this.toggleDeveloperPassword);
+                    });
+                }
+
+                if (this.toggleNewPortalPassword) {
+                    this.toggleNewPortalPassword.addEventListener('click', () => {
+                        this.togglePasswordVisibility(document.getElementById('newPortalPassword'), this.toggleNewPortalPassword);
+                    });
+                }
 
                 this.logoutBtn.addEventListener('click', () => {
                     this.handleLogout();
@@ -1205,10 +1257,6 @@
                     return data.valid === true;
                 } catch (error) {
                     console.error('Password validation error:', error);
-                    
-                    // Fallback to hardcoded validation if server is unreachable
-                    console.warn('Using fallback password validation');
-                    return this.fallbackPasswordValidation(password);
                 }
             }
 
@@ -1223,6 +1271,7 @@
             clearAuthState() {
                 sessionStorage.removeItem('portalAuth');
                 this.isAuthenticated = false;
+                this.isDeveloperAuthenticated = false;
             }
 
             resetSessionTimer() {
@@ -1255,6 +1304,7 @@
                     const isValid = await this.validateDeveloperCredentials(username, password);
                     
                     if (isValid) {
+                        this.isDeveloperAuthenticated = true;
                         this.showAlert('Developer access granted!', 'success');
                         setTimeout(() => {
                             this.showDeveloperDashboard();
@@ -1322,9 +1372,10 @@
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({
-                              currentDeveloperPassword: currentDevPassword, // User enters this
-                              newPortalPassword: newPassword
+                        
+                       body: JSON.stringify({
+                           currentDeveloperPassword: currentDevPassword, // User enters this
+                           newPortalPassword: newPassword
                         })
                     });
 
@@ -1344,6 +1395,7 @@
             }
 
             showMainCard() {
+                console.log('Showing main card');
                 this.hideAllAuthCards();
                 setTimeout(() => {
                     this.mainCard.style.display = 'block';
@@ -1352,22 +1404,16 @@
             }
 
             showDeveloperLogin() {
-                console.log('showDeveloperLogin called');
-                console.log('Developer card element:', this.developerCard);
-                
+                console.log('Showing developer login card');
                 this.hideAllAuthCards();
                 setTimeout(() => {
-                    if (this.developerCard) {
-                        this.developerCard.style.display = 'block';
-                        console.log('Developer card display set to block');
-                        this.focusInput(this.developerUsernameInput);
-                    } else {
-                        console.error('Developer card not found!');
-                    }
+                    this.developerCard.style.display = 'block';
+                    this.focusInput(this.developerUsernameInput);
                 }, 300);
             }
 
             showDeveloperDashboard() {
+                console.log('Showing developer dashboard');
                 this.hideAllAuthCards();
                 setTimeout(() => {
                     this.developerDashboard.style.display = 'block';
@@ -1377,7 +1423,9 @@
             hideAllAuthCards() {
                 const cards = [this.mainCard, this.developerCard, this.developerDashboard];
                 cards.forEach(card => {
-                    card.style.display = 'none';
+                    if (card) {
+                        card.style.display = 'none';
+                    }
                 });
             }
 
@@ -1389,6 +1437,13 @@
                     this.showPortal();
                     this.resetSessionTimer();
                 }, 1500);
+            }
+
+            handleDeveloperLogout() {
+                this.isDeveloperAuthenticated = false;
+                this.showAlert('Developer logged out', 'info');
+                this.showMainCard();
+                this.clearDeveloperForm();
             }
 
             handleLogout() {
@@ -1403,11 +1458,13 @@
             }
 
             setDeveloperLoadingState(loading) {
-                this.devLoginBtn.disabled = loading;
-                if (loading) {
-                    this.devLoginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
-                } else {
-                    this.devLoginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                if (this.devLoginBtn) {
+                    this.devLoginBtn.disabled = loading;
+                    if (loading) {
+                        this.devLoginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+                    } else {
+                        this.devLoginBtn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+                    }
                 }
             }
 
@@ -1434,19 +1491,6 @@
                 // Focus on enrollment input
                 setTimeout(() => {
                     this.focusInput(this.enrollmentInput);
-                }, 300);
-            }
-
-            showAuth() {
-                this.portalScreen.style.display = 'none';
-                this.authScreen.style.display = 'flex';
-                
-                // Reset portal state
-                this.hideIdCard();
-                this.hideMessages();
-                
-                setTimeout(() => {
-                    this.focusInput(this.portalPasswordInput);
                 }, 300);
             }
 
@@ -1483,7 +1527,7 @@
                         console.log('✅ Student data retrieved successfully');
                         this.displayStudentCard(studentData.data);
                         this.showSuccess('Student details retrieved successfully!');
-                        this.resetSessionTimer(); // Reset timer on activity
+                        this.resetSessionTimer();
                     } else {
                         console.log('❌ No student found');
                         this.showError(studentData.message || 'No student found with this enrollment number');
@@ -1586,7 +1630,6 @@
                     { label: 'Mobile Number', value: data.MobileNo || 'N/A', icon: 'fas fa-phone' }
                 ];
 
-                // Add optional fields if available
                 if (data.FatherName) {
                     fields.push({ label: 'Father\'s Name', value: data.FatherName, icon: 'fas fa-male' });
                 }
@@ -1722,10 +1765,12 @@
             }
 
             focusInput(input) {
-                setTimeout(() => {
-                    input.focus();
-                    input.select();
-                }, 100);
+                if (input) {
+                    setTimeout(() => {
+                        input.focus();
+                        input.select();
+                    }, 100);
+                }
             }
 
             clearAllForms() {
@@ -1733,6 +1778,12 @@
                 forms.forEach(form => form.reset());
                 this.hideIdCard();
                 this.hideMessages();
+            }
+
+            clearDeveloperForm() {
+                if (this.developerLoginForm) {
+                    this.developerLoginForm.reset();
+                }
             }
 
             showAlert(message, type = 'info') {
@@ -1777,6 +1828,8 @@
             console.log('🔐 Created by Stranger Bot');
             
             const portal = new CombinedPortal();
+            
+            // Make it globally accessible for debugging
             window.CombinedPortal = portal;
             
             console.log('✅ Combined Portal loaded successfully!');
